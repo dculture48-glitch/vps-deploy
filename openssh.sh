@@ -1,23 +1,19 @@
 #!/bin/bash
-REGION=${REGION:-ap}
+/usr/sbin/sshd
 
-/ngrok tcp --authtoken "${NGROK_TOKEN}" --region "${REGION}" 22 &
+sleep 2
+
+echo ""
+echo "=== Starting bore tunnel for SSH ==="
+bore local 22 --to bore.pub &
+BORE_PID=$!
 
 sleep 5
 
-curl -s http://localhost:4040/api/tunnels | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    url = data['tunnels'][0]['public_url'][6:]
-    host, port = url.split(':')
-    print('\n=== SSH Connection Info ===')
-    print(f'ssh root@{host} -p {port}')
-    print('ROOT Password: craxid')
-    print('==========================\n')
-except Exception as e:
-    print(f'Error getting tunnel info: {e}')
-    print('Check NGROK_TOKEN is valid')
-" || echo "Error: Could not get tunnel info. Check NGROK_TOKEN."
+echo ""
+echo "=== VPS is running! ==="
+echo "Connect using: ssh root@bore.pub -p <PORT shown above>"
+echo "ROOT Password: craxid"
+echo "========================"
 
-/usr/sbin/sshd -D
+wait $BORE_PID
